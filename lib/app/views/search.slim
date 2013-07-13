@@ -1,0 +1,13 @@
+h1 Search
+form method="get" url="/search"
+  label Input your query
+  input name="query" type="text"
+  br/
+  input type="submit"
+
+- if @query
+  h3 Query: #{@query}
+  h4 Results:
+  - @pages.each do |page|
+    h3
+      a href="#{page.url}" #{page.title}

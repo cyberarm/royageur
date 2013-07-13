@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    title Royageur
+    link href='/style.css' rel='stylesheet' type='text/css'
+  body
+    #content
+      #header
+        #header_logo
+          a href="/" class="header_logo"
+            h1 Royageur
+        #header_status
+          p Indexers: #{Royageur::POOL.count}
+          p Pages in DB: #{Royageur::DbPage.count}
+          p
+            a href="/indexer/new" Start new indexer
+          p
+            a href="/search" Start search
+
+      #page
+        #page_sidebar
+          p Suggested # of indexers: #{OS.cpu_count*4}
+          h2 Indexers:
+          - Royageur::POOL.each do |indexer|
+            -begin
+              p Indexer: #{indexer[:indexer].object_id}
+              p Status: #{indexer[:indexer].status}
+              a href="/indexer/stop/#{indexer.object_id}" Kill indexer
+              hr/
+            -rescue Celluloid::DeadActorError
+              - Royageur::POOL.delete(indexer)
+              p Indexer: DEAD
+              p Status: Crashed
+              a href="/indexer/stop/#{indexer.object_id}" Kill indexer
+              hr/
+        #page_content
+          == yield

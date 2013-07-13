@@ -1,0 +1,11 @@
+h1 Royageur #{Royageur::VERSION}
+p Royageur is a school project to create a basic, functional, obedent, web crawler.
+h2 Platform: #{RUBY_PLATFORM}/#{RUBY_ENGINE} #{RUBY_VERSION}
+h2 Memory usage: #{OS.rss_bytes/1024}MB
+h2 title="one minute average" CPU Load Average: #{@vmstat.load_average.one_minute} of #{OS.cpu_count}.0
+
+h2 Pages Indexed: #{Royageur::DbPage.count}
+h2 URLs crawled: #{Royageur::DbUrl.all(crawled: true).count}
+h2 URLs to crawl: #{Royageur::DbUrl.all(crawled: false).count}
+- Royageur::DbUrl.all(crawled: false, allowed: true, limit: 100).each do |url|
+  p #{url.url[0..70]}
