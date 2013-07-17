@@ -32,11 +32,9 @@ class Royageur
 
     get "/indexer/stop/:id" do
       Royageur::POOL.each do |indexer|
-        indexer.actors.each do |actor|
-          if actor.object_id == params[:id]
-            actor.kill
-            Royageur::POOL.delete(indexer)
-          end
+        if indexer.id == params[:id]
+          indexer.live = false
+          Royageur::POOL.delete(indexer)
         end
       end
       redirect "/"

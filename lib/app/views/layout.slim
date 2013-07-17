@@ -22,10 +22,9 @@ html
           p Suggested # of indexers: #{OS.cpu_count*4}
           h2 Indexers:
           - Royageur::POOL.each do |indexer|
-            - indexer.actors.each do |actor|
-              p Indexer: #{actor.object_id}
-              p Status: #{actor.status}
-              a href="/indexer/stop/#{actor.object_id}" Kill indexer
-              hr/
+            p Indexer: #{indexer.id}
+            p Status: #{indexer.status}
+            a href="/indexer/stop/#{indexer.id}" Kill indexer
+            hr/
         #page_content
           == yield

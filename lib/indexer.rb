@@ -5,10 +5,14 @@ class Royageur
       exit
     end
 
-    attr_reader :status
-    def initialize(live_forever=false)
+    attr_reader :id, :status
+    attr_accessor :live
+    def initialize(life=600.0, live_forever=false)
+      Royageur::POOL << self
+      @id     = SecureRandom.uuid
       @status = "Initialized"
-      @life   = 600.0 # ten minutes
+      @life   = life # ten minutes
+      @live   = true
       @live_forever = live_forever
       @start_time=Time.now
     end
@@ -16,10 +20,10 @@ class Royageur
     def run
       loop do
         p Time.now-@start_time
-        if Time.now-@start_time >= @life
+        if Time.now-@start_time >= @life or @live == false
           ss "DEAD"
           Royageur::Crawler.new if @live_forever
-          Royageur::POOL.delete(Thread.current)
+          Royageur::POOL.delete(self)
           break
         end
         fetch_and_process_page
@@ -35,39 +39,54 @@ class Royageur
       dburl = Royageur::DbUrl.first(crawled: false, allowed: true)
       if dburl
         url = dburl.url
-        ss "Fetching #{url}"
-        @robot = RobotsTXT.new(url)
-        ss "Allowed at #{url}? #{@robot.allowed?}"
-        if @robot.allowed?
-          ss "Resting #{@robot.crawl_delay} seconds" if @robot.crawl_delay
-          sleep(@robot.crawl_delay) if @robot.crawl_delay
-          request = Typhoeus.head(url)
-          if request.headers["Content-Type"] && request.headers["Content-Type"].include?("text/html")
-            begin
-              connection = Typhoeus.get(url, followlocation: true, connecttimeout: 20)
-              ss "Completed fetch in #{connection.total_time}s"
-              dburl.update(crawled: true, url: connection.effective_url, crawled_at: Time.now)
-              dburl.errors.each do |e|
-                puts e
-                if e.include?("Url is already taken")
-                  ss "Deleting duplicate URL"
-                  dburl.destroy
-                else
-                  puts "Aborting..."
-                  abort("DATABASE ERROR")
-                end
-              end
+        begin
+          @robot = RobotsTXT.new(url)
+          ss "Allowed at #{url}? #{@robot.allowed?}"
 
-              process_page(connection, connection.total_time)
-            rescue Timeout::Error
-              dburl.update(crawled: true) if dburl
+          if @robot.allowed?
+            ss "Resting #{@robot.crawl_delay} seconds" if @robot.crawl_delay
+            ss "Resting 1.5 seconds" unless @robot.crawl_delay
+            sleep(@robot.crawl_delay) if @robot.crawl_delay # Follow crawl delay if present,
+            sleep(1.5) unless @robot.crawl_delay # sleep for 1.5 seconds if no crawl delay.
+  
+            ss "Fetching headers: #{url}"
+            request = Typhoeus.head(url)
+            if request.headers["Content-Type"] && request.headers["Content-Type"].include?("text/html")
+              begin
+                ss "Resting #{@robot.crawl_delay} seconds" if @robot.crawl_delay
+                ss "Resting 1.5 seconds" unless @robot.crawl_delay
+                sleep(@robot.crawl_delay) if @robot.crawl_delay # Follow crawl delay if present,
+                sleep(1.5) unless @robot.crawl_delay # sleep for 1.5 seconds if no crawl delay.
+
+                ss "Fetching #{url}"
+                connection = Typhoeus.get(url, followlocation: true, connecttimeout: 20)
+                ss "Completed fetch in #{connection.total_time}s"
+                dburl.update(crawled: true, url: connection.effective_url, crawled_at: Time.now)
+                dburl.errors.each do |e|
+                  puts e
+                  if e.include?("Url is already taken")
+                    ss "Deleting duplicate URL"
+                    dburl.destroy
+                  else
+                    puts "Aborting..."
+                    abort("DATABASE ERROR")
+                  end
+                end
+  
+                process_page(connection, connection.total_time)
+              rescue Timeout::Error
+                dburl.update(crawled: true) if dburl
+              end
+            else
+              dburl.update(allowed: false) if dburl
             end
           else
+            ss "Not allowed at #{url}"
             dburl.update(allowed: false) if dburl
           end
-        else
-          ss "Not allowed at #{url}"
-          dburl.update(allowed: false) if dburl
+        rescue Encoding::CompatibilityError => e
+          ss "error: #{e}, skipping URL"
+          dburl.update(crawled: true) if dburl
         end
       else
         ss "No urls in DB that are not crawled"
