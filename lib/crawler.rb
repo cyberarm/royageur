@@ -1,12 +1,9 @@
 class Royageur
   class Crawler
     def initialize
-      Thread.new do
-        indexer = Royageur::Indexer.new
-        Thread.current[:indexer] = indexer
-        Royageur::POOL << Thread.current
-        indexer.run
-      end
+      indexer = Royageur::Indexer.supervise
+      Royageur::POOL << indexer
+      indexer.actors.first.async.run
     end
   end
 end

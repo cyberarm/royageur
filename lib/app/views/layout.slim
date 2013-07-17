@@ -22,16 +22,10 @@ html
           p Suggested # of indexers: #{OS.cpu_count*4}
           h2 Indexers:
           - Royageur::POOL.each do |indexer|
-            -begin
-              p Indexer: #{indexer[:indexer].object_id}
-              p Status: #{indexer[:indexer].status}
-              a href="/indexer/stop/#{indexer.object_id}" Kill indexer
-              hr/
-            -rescue Celluloid::DeadActorError
-              - Royageur::POOL.delete(indexer)
-              p Indexer: DEAD
-              p Status: Crashed
-              a href="/indexer/stop/#{indexer.object_id}" Kill indexer
+            - indexer.actors.each do |actor|
+              p Indexer: #{actor.object_id}
+              p Status: #{actor.status}
+              a href="/indexer/stop/#{actor.object_id}" Kill indexer
               hr/
         #page_content
           == yield
