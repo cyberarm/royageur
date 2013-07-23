@@ -10,7 +10,12 @@ class Royageur
     end
 
     def crawl_delay
-      @indexer.crawl_delay(@url)
+      delay = @indexer.crawl_delay(@url)
+      if delay <= 1
+        return 1.5
+      else
+        return delay
+      end
     end
   end
 end

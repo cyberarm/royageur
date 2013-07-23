@@ -27,7 +27,6 @@ class Royageur
           break
         end
         fetch_and_process_page
-        sleep(0.3)
       end
     end
 
@@ -44,19 +43,15 @@ class Royageur
           ss "Allowed at #{url}? #{@robot.allowed?}"
 
           if @robot.allowed?
-            ss "Resting #{@robot.crawl_delay} seconds" if @robot.crawl_delay
-            ss "Resting 1.5 seconds" unless @robot.crawl_delay
-            sleep(@robot.crawl_delay) if @robot.crawl_delay # Follow crawl delay if present,
-            sleep(1.5) unless @robot.crawl_delay # sleep for 1.5 seconds if no crawl delay.
+            ss "Resting #{@robot.crawl_delay} seconds"
+            sleep(@robot.crawl_delay) # Follow crawl delay if present, sleep for 1.5 seconds if no crawl delay.
   
             ss "Fetching headers: #{url}"
             request = Typhoeus.head(url)
             if request.headers["Content-Type"] && request.headers["Content-Type"].include?("text/html")
               begin
-                ss "Resting #{@robot.crawl_delay} seconds" if @robot.crawl_delay
-                ss "Resting 1.5 seconds" unless @robot.crawl_delay
-                sleep(@robot.crawl_delay) if @robot.crawl_delay # Follow crawl delay if present,
-                sleep(1.5) unless @robot.crawl_delay # sleep for 1.5 seconds if no crawl delay.
+                ss "Resting #{@robot.crawl_delay} seconds"
+                sleep(@robot.crawl_delay) # Follow crawl delay if present, sleep for 1.5 seconds if no crawl delay.
 
                 ss "Fetching #{url}"
                 connection = Typhoeus.get(url, followlocation: true, connecttimeout: 20)
