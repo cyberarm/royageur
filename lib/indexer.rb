@@ -130,7 +130,7 @@ class Royageur
           ss "Adding #{url['href']} to DbUrl"
 
         elsif url['href'] && url['href'].start_with?('/')
-          DbUrl.create(url: "#{URI.parse(page.effective_url).scheme}://#{URI.parse(page.effective_url).host}/#{url['href']}")
+          DbUrl.create(url: "#{URI.parse(page.effective_url).scheme}://#{URI.parse(page.effective_url).host}#{url['href']}")
           ss "Adding #{URI.parse(page.effective_url).scheme}://#{URI.parse(page.effective_url).host.sub(/(\/)+$/, '')}#{url['href']} to DbUrl"
         end
       end
